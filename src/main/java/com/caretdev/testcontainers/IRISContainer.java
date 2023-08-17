@@ -4,7 +4,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.testcontainers.containers.JdbcDatabaseContainer;
 import org.testcontainers.utility.DockerImageName;
 
-class IRISContainer<SELF extends IRISContainer<SELF>>
+public class IRISContainer<SELF extends IRISContainer<SELF>>
   extends JdbcDatabaseContainer<SELF> {
 
   public static final String NAME = "iris";
