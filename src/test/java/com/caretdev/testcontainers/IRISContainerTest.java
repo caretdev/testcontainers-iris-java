@@ -4,18 +4,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
-
-import java.nio.file.Paths;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-
+import javax.sql.DataSource;
 import org.apache.commons.dbutils.QueryRunner;
 import org.apache.commons.dbutils.ResultSetHandler;
 import org.junit.Test;
-import org.testcontainers.containers.JdbcDatabaseContainer;
-
-import javax.sql.DataSource;
 
 public class IRISContainerTest {
 
@@ -27,22 +22,25 @@ public class IRISContainerTest {
     private void performSimpleTest(String jdbcUrl) throws SQLException {
         HikariDataSource dataSource = getDataSource(jdbcUrl, 1);
         new QueryRunner(dataSource)
-                .query(
-                        "SELECT 1",
-                        new ResultSetHandler<Object>() {
-                            @Override
-                            public Object handle(ResultSet rs) throws SQLException {
-                                rs.next();
-                                int resultSetInt = rs.getInt(1);
-                                assertThat(resultSetInt).as("A basic SELECT query succeeds").isEqualTo(1);
-                                return true;
-                            }
-                        }
-                );
+            .query(
+                "SELECT 1",
+                new ResultSetHandler<Object>() {
+                    @Override
+                    public Object handle(ResultSet rs) throws SQLException {
+                        rs.next();
+                        int resultSetInt = rs.getInt(1);
+                        assertThat(resultSetInt)
+                            .as("A basic SELECT query succeeds")
+                            .isEqualTo(1);
+                        return true;
+                    }
+                }
+            );
         dataSource.close();
     }
 
-    protected ResultSet performQuery(IRISContainer container, String sql) throws SQLException {
+    protected ResultSet performQuery(IRISContainer container, String sql)
+        throws SQLException {
         DataSource ds = getDataSource(container);
         Statement statement = ds.getConnection().createStatement();
         statement.execute(sql);
@@ -73,7 +71,10 @@ public class IRISContainerTest {
 
     @Test
     public void testWithCommunity() throws SQLException {
-        try (IRISContainer container = (IRISContainer) new IRISContainer("intersystemsdc/iris-community:2023.3-zpm")
+        try (
+            IRISContainer container = (IRISContainer) new IRISContainer(
+                "intersystemsdc/iris-community:2023.3-zpm"
+            )
                 .withUsername("test")
                 .withPassword("test")
                 .withDatabaseName("TEST")
@@ -86,7 +87,10 @@ public class IRISContainerTest {
             int resultSetInt = resultSet.getInt(1);
             assertThat(resultSetInt).isEqualTo(1);
 
-            ResultSet resultSet2 = performQuery(container, "SELECT $username, $namespace");
+            ResultSet resultSet2 = performQuery(
+                container,
+                "SELECT $username, $namespace"
+            );
 
             assertThat(resultSet2.getString(1)).isEqualTo(container.getUsername());
             assertThat(resultSet2.getString(2)).isEqualTo(container.getDatabaseName());
@@ -95,7 +99,10 @@ public class IRISContainerTest {
 
     @Test
     public void testWithVanillaCommunity() throws SQLException {
-        try (IRISContainer container = (IRISContainer) new IRISContainer("containers.intersystems.com/intersystems/iris-community:2023.3")
+        try (
+            IRISContainer container = (IRISContainer) new IRISContainer(
+                "containers.intersystems.com/intersystems/iris-community:2023.3"
+            )
                 .withUsername("test")
                 .withPassword("test")
                 .withDatabaseName("TEST")
@@ -108,7 +115,10 @@ public class IRISContainerTest {
             int resultSetInt = resultSet.getInt(1);
             assertThat(resultSetInt).isEqualTo(1);
 
-            ResultSet resultSet2 = performQuery(container, "SELECT $username, $namespace");
+            ResultSet resultSet2 = performQuery(
+                container,
+                "SELECT $username, $namespace"
+            );
 
             assertThat(resultSet2.getString(1)).isEqualTo(container.getUsername());
             assertThat(resultSet2.getString(2)).isEqualTo(container.getDatabaseName());
@@ -117,7 +127,10 @@ public class IRISContainerTest {
 
     @Test
     public void testWithEnterprise() throws SQLException {
-        try (IRISContainer container = (IRISContainer) new IRISContainer("containers.intersystems.com/intersystems/iris:2023.3")
+        try (
+            IRISContainer container = (IRISContainer) new IRISContainer(
+                "containers.intersystems.com/intersystems/iris:2023.3"
+            )
                 .withUsername("test")
                 .withPassword("test")
                 .withDatabaseName("TEST")
@@ -131,7 +144,10 @@ public class IRISContainerTest {
             int resultSetInt = resultSet.getInt(1);
             assertThat(resultSetInt).isEqualTo(1);
 
-            ResultSet resultSet2 = performQuery(container, "SELECT $username, $namespace");
+            ResultSet resultSet2 = performQuery(
+                container,
+                "SELECT $username, $namespace"
+            );
 
             assertThat(resultSet2.getString(1)).isEqualTo(container.getUsername());
             assertThat(resultSet2.getString(2)).isEqualTo(container.getDatabaseName());

@@ -89,6 +89,12 @@
             <version>3.24.2</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.18.30</version>
+            <scope>compile</scope>
+        </dependency>
     </dependencies>
 
     <repositories>
@@ -158,7 +164,7 @@
                 <configuration>
                     <prettierJavaVersion>1.5.0</prettierJavaVersion>
                     <printWidth>90</printWidth>
-                    <tabWidth>2</tabWidth>
+                    <tabWidth>4</tabWidth>
                     <useTabs>false</useTabs>
                     <ignoreConfigFile>true</ignoreConfigFile>
                     <ignoreEditorConfig>true</ignoreEditorConfig>

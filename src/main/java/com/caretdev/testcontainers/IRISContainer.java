@@ -1,29 +1,29 @@
 package com.caretdev.testcontainers;
 
-import com.github.dockerjava.api.command.InspectContainerResponse;
-import org.apache.commons.lang3.StringUtils;
-import org.jetbrains.annotations.NotNull;
-import org.testcontainers.containers.BindMode;
-import org.testcontainers.containers.JdbcDatabaseContainer;
-import org.testcontainers.containers.wait.strategy.LogMessageWaitStrategy;
-import org.testcontainers.containers.wait.strategy.Wait;
-import org.testcontainers.utility.DockerImageName;
+import static java.lang.String.format;
 
+import com.github.dockerjava.api.command.InspectContainerResponse;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Set;
 import java.util.stream.Stream;
+import lombok.EqualsAndHashCode;
+import org.apache.commons.lang3.StringUtils;
+import org.jetbrains.annotations.NotNull;
+import org.testcontainers.containers.BindMode;
+import org.testcontainers.containers.JdbcDatabaseContainer;
+import org.testcontainers.containers.wait.strategy.Wait;
+import org.testcontainers.utility.DockerImageName;
 
-import static java.lang.String.format;
-
+@EqualsAndHashCode(callSuper = true)
 public class IRISContainer<SELF extends IRISContainer<SELF>>
-        extends JdbcDatabaseContainer<SELF> {
+    extends JdbcDatabaseContainer<SELF> {
 
     public static final String NAME = "iris";
 
     private static final DockerImageName DEFAULT_IMAGE_NAME = DockerImageName.parse(
-            "intersystemsdc/iris-community"
+        "intersystemsdc/iris-community"
     );
 
     public static final String DEFAULT_TAG = "latest";
@@ -44,7 +44,6 @@ public class IRISContainer<SELF extends IRISContainer<SELF>>
 
     private String licenseKey = null;
 
-    @Deprecated
     public IRISContainer() {
         this(DEFAULT_IMAGE_NAME.withTag(DEFAULT_TAG));
     }
@@ -55,30 +54,28 @@ public class IRISContainer<SELF extends IRISContainer<SELF>>
 
     public IRISContainer(final DockerImageName dockerImageName) {
         super(dockerImageName);
-
-        DockerImageName[] allSupportedImages = Stream.of(new String[]{
+        DockerImageName[] allSupportedImages = Stream
+            .of(
                 // InterSystemsDC imaages with ZPM
                 "intersystemsdc/iris-community",
                 "intersystemsdc/iris-ml-community",
                 "intersystemsdc/irishealth-community",
                 "intersystemsdc/irishealth-ml-community",
-
                 // Vanilla Community Edition
                 "containers.intersystems.com/intersystems/iris-community",
                 "containers.intersystems.com/intersystemsdc/iris-ml-community",
                 "containers.intersystems.com/intersystemsdc/irishealth-community",
                 "containers.intersystems.com/intersystemsdc/irishealth-ml-community",
-
                 // Vanilla Enterprise Edition
                 "containers.intersystems.com/intersystems/iris",
                 "containers.intersystems.com/intersystemsdc/iris-ml",
                 "containers.intersystems.com/intersystemsdc/irishealth",
                 "containers.intersystems.com/intersystemsdc/irishealth-ml"
-        }).map(DockerImageName::new).toArray(DockerImageName[]::new);
+            )
+            .map(DockerImageName::parse)
+            .toArray(DockerImageName[]::new);
 
-        dockerImageName.assertCompatibleWith(
-                allSupportedImages
-        );
+        dockerImageName.assertCompatibleWith(allSupportedImages);
 
         addExposedPort(IRIS_PORT);
         addExposedPort(52773);
@@ -99,13 +96,13 @@ public class IRISContainer<SELF extends IRISContainer<SELF>>
     public String getJdbcUrl() {
         String additionalUrlParams = constructUrlParameters("?", "&");
         return (
-                "jdbc:IRIS://" +
-                        getHost() +
-                        ":" +
-                        getMappedPort(IRIS_PORT) +
-                        "/" +
-                        namespace +
-                        additionalUrlParams
+            "jdbc:IRIS://" +
+            getHost() +
+            ":" +
+            getMappedPort(IRIS_PORT) +
+            "/" +
+            namespace +
+            additionalUrlParams
         );
     }
 
@@ -130,7 +127,11 @@ public class IRISContainer<SELF extends IRISContainer<SELF>>
         addEnv("IRIS_USERNAME", username);
         addEnv("IRIS_PASSWORD", password);
         if (this.licenseKey != null && new File(this.licenseKey).exists()) {
-            addFileSystemBind(this.licenseKey, "/usr/irissys/mgr/iris.key", BindMode.READ_ONLY);
+            addFileSystemBind(
+                this.licenseKey,
+                "/usr/irissys/mgr/iris.key",
+                BindMode.READ_ONLY
+            );
         }
     }
 
@@ -149,22 +150,37 @@ public class IRISContainer<SELF extends IRISContainer<SELF>>
     protected void containerIsStarted(InspectContainerResponse containerInfo) {
         if (!this.getDockerImageName().startsWith("intersystemsdc")) {
             String createNamespaceCmd = format(
-                    "##class(%%SQL.Statement).%%ExecDirect(,\"CREATE DATABASE %s\")", namespace);
+                "##class(%%SQL.Statement).%%ExecDirect(,\"CREATE DATABASE %s\")",
+                namespace
+            );
 
             String createUserCmd = format(
-                    "##class(Security.Users).Create(\"%s\",\"%s\",\"%s\",,\"%s\")",
-                    username,
-                    "%All",
-                    password,
-                    namespace);
+                "##class(Security.Users).Create(\"%s\",\"%s\",\"%s\",,\"%s\")",
+                username,
+                "%All",
+                password,
+                namespace
+            );
             try {
                 if (!namespace.equalsIgnoreCase("USER")) {
-                    this.execInContainer("iris", "session", "iris", "-U", "%SYS", createNamespaceCmd);
+                    this.execInContainer(
+                            "iris",
+                            "session",
+                            "iris",
+                            "-U",
+                            "%SYS",
+                            createNamespaceCmd
+                        );
                 }
-                this.execInContainer("iris", "session", "iris", "-U", "%SYS", createUserCmd);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            } catch (InterruptedException e) {
+                this.execInContainer(
+                        "iris",
+                        "session",
+                        "iris",
+                        "-U",
+                        "%SYS",
+                        createUserCmd
+                    );
+            } catch (IOException | InterruptedException e) {
                 throw new RuntimeException(e);
             }
         }
