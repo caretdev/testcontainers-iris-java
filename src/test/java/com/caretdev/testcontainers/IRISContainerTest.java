@@ -4,44 +4,137 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
+
+import java.nio.file.Paths;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
+
 import org.apache.commons.dbutils.QueryRunner;
 import org.apache.commons.dbutils.ResultSetHandler;
 import org.junit.Test;
+import org.testcontainers.containers.JdbcDatabaseContainer;
+
+import javax.sql.DataSource;
 
 public class IRISContainerTest {
 
-  @Test
-  public void testIRISWithNoSpecifiedVersion() throws SQLException {
-    performSimpleTest("jdbc:tc:iris://hostname/databasename");
-  }
+    @Test
+    public void testIRISWithNoSpecifiedVersion() throws SQLException {
+        performSimpleTest("jdbc:tc:iris://hostname/databasename");
+    }
 
-  private void performSimpleTest(String jdbcUrl) throws SQLException {
-    HikariDataSource dataSource = getDataSource(jdbcUrl, 1);
-    new QueryRunner(dataSource)
-      .query(
-        "SELECT 1",
-        new ResultSetHandler<Object>() {
-          @Override
-          public Object handle(ResultSet rs) throws SQLException {
-            rs.next();
-            int resultSetInt = rs.getInt(1);
-            assertThat(resultSetInt).as("A basic SELECT query succeeds").isEqualTo(1);
-            return true;
-          }
+    private void performSimpleTest(String jdbcUrl) throws SQLException {
+        HikariDataSource dataSource = getDataSource(jdbcUrl, 1);
+        new QueryRunner(dataSource)
+                .query(
+                        "SELECT 1",
+                        new ResultSetHandler<Object>() {
+                            @Override
+                            public Object handle(ResultSet rs) throws SQLException {
+                                rs.next();
+                                int resultSetInt = rs.getInt(1);
+                                assertThat(resultSetInt).as("A basic SELECT query succeeds").isEqualTo(1);
+                                return true;
+                            }
+                        }
+                );
+        dataSource.close();
+    }
+
+    protected ResultSet performQuery(IRISContainer container, String sql) throws SQLException {
+        DataSource ds = getDataSource(container);
+        Statement statement = ds.getConnection().createStatement();
+        statement.execute(sql);
+        ResultSet resultSet = statement.getResultSet();
+
+        resultSet.next();
+        return resultSet;
+    }
+
+    private HikariDataSource getDataSource(String jdbcUrl, int poolSize) {
+        HikariConfig hikariConfig = new HikariConfig();
+        hikariConfig.setJdbcUrl(jdbcUrl);
+        hikariConfig.setConnectionTestQuery("SELECT 1");
+        hikariConfig.setMinimumIdle(1);
+        hikariConfig.setMaximumPoolSize(poolSize);
+
+        return new HikariDataSource(hikariConfig);
+    }
+
+    protected DataSource getDataSource(IRISContainer container) {
+        HikariConfig hikariConfig = new HikariConfig();
+        hikariConfig.setJdbcUrl(container.getJdbcUrl());
+        hikariConfig.setUsername(container.getUsername());
+        hikariConfig.setPassword(container.getPassword());
+        hikariConfig.setDriverClassName(container.getDriverClassName());
+        return new HikariDataSource(hikariConfig);
+    }
+
+    @Test
+    public void testWithCommunity() throws SQLException {
+        try (IRISContainer container = (IRISContainer) new IRISContainer("intersystemsdc/iris-community:2023.3-zpm")
+                .withUsername("test")
+                .withPassword("test")
+                .withDatabaseName("TEST")
+                .withStartupTimeoutSeconds(15)
+        ) {
+            container.start();
+
+            ResultSet resultSet = performQuery(container, "SELECT 1");
+
+            int resultSetInt = resultSet.getInt(1);
+            assertThat(resultSetInt).isEqualTo(1);
+
+            ResultSet resultSet2 = performQuery(container, "SELECT $username, $namespace");
+
+            assertThat(resultSet2.getString(1)).isEqualTo(container.getUsername());
+            assertThat(resultSet2.getString(2)).isEqualTo(container.getDatabaseName());
         }
-      );
-    dataSource.close();
-  }
+    }
 
-  private HikariDataSource getDataSource(String jdbcUrl, int poolSize) {
-    HikariConfig hikariConfig = new HikariConfig();
-    hikariConfig.setJdbcUrl(jdbcUrl);
-    hikariConfig.setConnectionTestQuery("SELECT 1");
-    hikariConfig.setMinimumIdle(1);
-    hikariConfig.setMaximumPoolSize(poolSize);
+    @Test
+    public void testWithVanillaCommunity() throws SQLException {
+        try (IRISContainer container = (IRISContainer) new IRISContainer("containers.intersystems.com/intersystems/iris-community:2023.3")
+                .withUsername("test")
+                .withPassword("test")
+                .withDatabaseName("TEST")
+                .withStartupTimeoutSeconds(15)
+        ) {
+            container.start();
 
-    return new HikariDataSource(hikariConfig);
-  }
+            ResultSet resultSet = performQuery(container, "SELECT 1");
+
+            int resultSetInt = resultSet.getInt(1);
+            assertThat(resultSetInt).isEqualTo(1);
+
+            ResultSet resultSet2 = performQuery(container, "SELECT $username, $namespace");
+
+            assertThat(resultSet2.getString(1)).isEqualTo(container.getUsername());
+            assertThat(resultSet2.getString(2)).isEqualTo(container.getDatabaseName());
+        }
+    }
+
+    @Test
+    public void testWithEnterprise() throws SQLException {
+        try (IRISContainer container = (IRISContainer) new IRISContainer("containers.intersystems.com/intersystems/iris:2023.3")
+                .withUsername("test")
+                .withPassword("test")
+                .withDatabaseName("TEST")
+                .withLicenseKey(System.getProperty("user.home") + "/iris.key")
+                .withStartupTimeoutSeconds(15)
+        ) {
+            container.start();
+
+            ResultSet resultSet = performQuery(container, "SELECT 1");
+
+            int resultSetInt = resultSet.getInt(1);
+            assertThat(resultSetInt).isEqualTo(1);
+
+            ResultSet resultSet2 = performQuery(container, "SELECT $username, $namespace");
+
+            assertThat(resultSet2.getString(1)).isEqualTo(container.getUsername());
+            assertThat(resultSet2.getString(2)).isEqualTo(container.getDatabaseName());
+        }
+    }
 }
