@@ -10,7 +10,7 @@ import java.sql.Statement;
 import javax.sql.DataSource;
 import org.apache.commons.dbutils.QueryRunner;
 import org.apache.commons.dbutils.ResultSetHandler;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class IRISContainerTest {
 
@@ -73,7 +73,7 @@ public class IRISContainerTest {
     public void testWithCommunity() throws SQLException {
         try (
             IRISContainer container = (IRISContainer) new IRISContainer(
-                "intersystemsdc/iris-community:2023.3-zpm"
+                "intersystemsdc/iris-community:latest-em-zpm"
             )
                 .withUsername("test")
                 .withPassword("test")
@@ -101,7 +101,7 @@ public class IRISContainerTest {
     public void testWithVanillaCommunity() throws SQLException {
         try (
             IRISContainer container = (IRISContainer) new IRISContainer(
-                "containers.intersystems.com/intersystems/iris-community:2023.3"
+                "containers.intersystems.com/intersystems/iris-community:latest-em"
             )
                 .withUsername("test")
                 .withPassword("test")
@@ -129,7 +129,7 @@ public class IRISContainerTest {
     public void testWithEnterprise() throws SQLException {
         try (
             IRISContainer container = (IRISContainer) new IRISContainer(
-                "containers.intersystems.com/intersystems/iris:2023.3"
+                "containers.intersystems.com/intersystems/iris:latest-em"
             )
                 .withUsername("test")
                 .withPassword("test")
