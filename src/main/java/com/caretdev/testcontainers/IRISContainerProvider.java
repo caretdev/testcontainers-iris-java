@@ -12,12 +12,12 @@ public class IRISContainerProvider extends JdbcDatabaseContainerProvider {
     }
 
     @Override
-    public JdbcDatabaseContainer newInstance() {
+    public JdbcDatabaseContainer<IRISContainer> newInstance() {
         return newInstance(IRISContainer.DEFAULT_TAG);
     }
 
     @Override
-    public JdbcDatabaseContainer newInstance(String tag) {
+    public JdbcDatabaseContainer<IRISContainer> newInstance(String tag) {
         if (tag != null) {
             return new IRISContainer(
                 DockerImageName.parse(IRISContainer.IMAGE).withTag(tag)

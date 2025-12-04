@@ -3,7 +3,6 @@ package com.caretdev.testcontainers;
 import static java.lang.String.format;
 
 import com.github.dockerjava.api.command.InspectContainerResponse;
-import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Set;
@@ -11,22 +10,20 @@ import java.util.stream.Stream;
 import lombok.EqualsAndHashCode;
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
-import org.testcontainers.containers.BindMode;
 import org.testcontainers.containers.JdbcDatabaseContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.utility.DockerImageName;
 
 @EqualsAndHashCode(callSuper = true)
-public class IRISContainer<SELF extends IRISContainer<SELF>>
-    extends JdbcDatabaseContainer<SELF> {
+public class IRISContainer extends JdbcDatabaseContainer<IRISContainer> {
 
     public static final String NAME = "iris";
 
     private static final DockerImageName DEFAULT_IMAGE_NAME = DockerImageName.parse(
-        "intersystemsdc/iris-community"
+        "containers.intersystems.com/intersystems/iris-community"
     );
 
-    public static final String DEFAULT_TAG = "latest";
+    public static final String DEFAULT_TAG = "latest-em";
 
     static final String IMAGE = DEFAULT_IMAGE_NAME.getUnversionedPart();
 
@@ -126,13 +123,13 @@ public class IRISContainer<SELF extends IRISContainer<SELF>>
         addEnv("IRIS_NAMESPACE", namespace);
         addEnv("IRIS_USERNAME", username);
         addEnv("IRIS_PASSWORD", password);
-        if (this.licenseKey != null && new File(this.licenseKey).exists()) {
-            addFileSystemBind(
-                this.licenseKey,
-                "/usr/irissys/mgr/iris.key",
-                BindMode.READ_ONLY
-            );
-        }
+        // if (this.licenseKey != null && new File(this.licenseKey).exists()) {
+        //     addFileSystemBind(
+        //         this.licenseKey,
+        //         "/usr/irissys/mgr/iris.key",
+        //         BindMode.READ_ONLY
+        //     );
+        // }
     }
 
     @Override
@@ -193,28 +190,28 @@ public class IRISContainer<SELF extends IRISContainer<SELF>>
     }
 
     @Override
-    public SELF withDatabaseName(String dbName) {
+    public IRISContainer withDatabaseName(String dbName) {
         this.namespace = dbName;
-        return self();
+        return this;
     }
 
     @Override
-    public SELF withUsername(String username) {
+    public IRISContainer withUsername(String username) {
         this.username = username;
-        return self();
+        return this;
     }
 
     @Override
-    public SELF withPassword(String password) {
+    public IRISContainer withPassword(String password) {
         if (StringUtils.isEmpty(password)) {
             throw new IllegalArgumentException("Password cannot be null or empty");
         }
         this.password = password;
-        return self();
+        return this;
     }
 
-    public SELF withLicenseKey(String licenseKey) {
+    public IRISContainer withLicenseKey(String licenseKey) {
         this.licenseKey = licenseKey;
-        return self();
+        return this;
     }
 }
